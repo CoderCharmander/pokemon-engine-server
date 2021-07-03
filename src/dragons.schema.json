@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/schema",
+    "type": "object",
+    "additionalProperties": {
+        "type": "object",
+        "description": "A dragon object",
+        "required": ["name", "base_stats"],
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "User-friendly dragon name"
+            },
+            "base_stats": {
+                "type": "object",
+                "description": "Base stats of the dragon",
+                "required": ["attack", "defense", "hp"],
+                "properties": {
+                    "attack": {
+                        "type": "integer"
+                    },
+                    "defense": {
+                        "type": "integer"
+                    },
+                    "hp": {
+                        "type": "integer"
+                    }
+                }
+            }
+        }
+    }
+}

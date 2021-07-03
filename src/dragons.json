@@ -1,0 +1,18 @@
+{
+    "mew": {
+        "name": "Mew",
+        "base_stats": {
+            "attack": 100,
+            "defense": 100,
+            "hp": 100
+        }
+    },
+    "mewtwo": {
+        "name": "Mewtwo",
+        "base_stats": {
+            "attack": 110,
+            "defense": 90,
+            "hp": 106
+        }
+    }
+}
