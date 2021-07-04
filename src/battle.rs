@@ -39,21 +39,7 @@ pub async fn handle_battle_request<U, R>(
         return;
     }
 
-    //let username = source_user.name.clone();
-    //let user = users.get(&username).unwrap();
     let other_user = users.get(&other_user).unwrap();
-
-    // let mut party_items = vec![];
-    // for d in dragon_names {
-    //     let party_item = match create_dragon(&d) {
-    //         Some(d) => PartyItem::new(d),
-    //         None => {
-    //             send_request_error(&user.tx, "invalid_dragon_name");
-    //             return Ok(());
-    //         }
-    //     };
-    //     party_items.push(party_item);
-    // }
 
     if dragon_names.len() > 6 {
         send_request_error(&source_user.tx, "too_many_party_items").unwrap();
@@ -111,8 +97,4 @@ pub async fn handle_battle_request<U, R>(
         }
         &RoomBattleStatus::Started(_) => return,
     }
-    // room.battle = Some(Battle {
-    //     usernames: (user.name.clone(), other_user.name.clone()),
-
-    // })
 }
