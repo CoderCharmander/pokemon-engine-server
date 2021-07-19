@@ -7,7 +7,7 @@ use warp::ws::{Message, WebSocket};
 use crate::{
     battle::handle_battle_request,
     messages::*,
-    rooms::{exit_room, Room, RoomBattleStatus, Rooms},
+    room::{Room, Rooms},
     user::{SingleUser, User, Users},
 };
 
@@ -85,7 +85,7 @@ pub async fn ws_handler(ws: WebSocket, name: String, users: Users, rooms: Rooms)
     let mut users = users.lock().await;
     let mut user = users.remove(&user.name).unwrap();
     info!("User {} disconnected", user.name);
-    exit_room(&mut rooms.lock().await, &mut user);
+    user.exit_room(&mut rooms.lock().await);
 }
 
 async fn handle_message(
@@ -129,9 +129,7 @@ async fn handle_message(
 
                 let mut rooms = rooms.lock().await;
                 let room = Room::new(user.name.clone());
-                if user.current_room_id.is_some() {
-                    exit_room(&mut rooms, user);
-                }
+                user.exit_room(&mut rooms);
                 user.current_room_id = Some(room_id.clone());
                 rooms.insert(room_id.clone(), room);
             }
@@ -146,7 +144,7 @@ async fn handle_message(
         WsMessage::RoomJoinRequest(RoomJoinRequest { room_id }) => {
             let mut rooms = rooms.lock().await;
             if user.current_room_id.is_some() {
-                exit_room(&mut rooms, user);
+                user.exit_room(&mut rooms);
             }
             let room = match rooms.get_mut(&room_id) {
                 Some(r) => r,
@@ -177,7 +175,7 @@ async fn handle_message(
         }
         WsMessage::RoomExitRequest(_) => {
             let mut rooms = rooms.lock().await;
-            exit_room(&mut rooms, user);
+            user.exit_room(&mut rooms);
             user.current_room_id = None;
         }
         WsMessage::BattleStartRequest(req) => {

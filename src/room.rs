@@ -1,14 +1,11 @@
 use std::{
     collections::HashMap,
-    ops::{Deref, DerefMut},
     sync::Arc,
 };
 
 use pokemon_engine::battle::{Battlefield, NopMessenger};
 
 use tokio::sync::Mutex;
-
-use crate::user::User;
 
 pub struct Battle {
     pub usernames: (String, String),
@@ -66,18 +63,3 @@ impl Room {
 //         }
 //     }
 // }
-
-pub fn exit_room<T: DerefMut + Deref<Target = HashMap<String, Room>>>(
-    rooms: &mut T,
-    user: &mut User,
-) {
-    let room = rooms
-        .get_mut(user.current_room_id.as_ref().unwrap())
-        .unwrap();
-    if room.users.len() == 1 {
-        rooms.remove(user.current_room_id.as_ref().unwrap());
-        return;
-    }
-    let idx = room.users.iter().position(|s| s == &user.name).unwrap();
-    room.users.remove(idx);
-}

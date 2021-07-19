@@ -12,7 +12,7 @@ use crate::{
     communication::send_request_error,
     data::create_dragon,
     messages::*,
-    rooms::{Battle, Room, RoomBattleStatus},
+    room::{Battle, Room, RoomBattleStatus},
     user::User,
 };
 

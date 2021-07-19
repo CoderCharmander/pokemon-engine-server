@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use rand::distributions::Uniform;
-use rooms::Rooms;
+use room::Rooms;
 use tokio::sync::Mutex;
 use warp::{ws::Ws, Filter};
 
@@ -12,7 +12,7 @@ mod data;
 mod error;
 mod handlers;
 mod messages;
-mod rooms;
+mod room;
 mod user;
 mod battle;
 
