@@ -109,6 +109,10 @@ json_structs! {
     reply BattleInvitation BattleInvitation "battle_invite" => {
         other_user: String
     }
+
+    reply BattleStartNotify BattleStartNotify "battle_start" => {
+        other_party: Vec<String>,
+    }
 }
 
 #[derive(Serialize)]

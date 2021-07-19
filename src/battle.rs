@@ -3,7 +3,10 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use pokemon_engine::{battle::{Battlefield, NopMessenger}, party::{Party, PartyItem}};
+use pokemon_engine::{
+    battle::{Battlefield, NopMessenger},
+    party::{Party, PartyItem},
+};
 
 use crate::{
     communication::send_request_error,
@@ -47,11 +50,18 @@ pub async fn handle_battle_request<U, R>(
     }
 
     room.battle = match &room.battle {
-        RoomBattleStatus::None => RoomBattleStatus::Prepared {
-            starter_username: String::from(source_username),
-            starter_party: dragon_names,
-            other_username: other_user.name.clone(),
-        },
+        RoomBattleStatus::None => {
+            other_user
+                .send(BattleInvitation {
+                    other_user: source_user.name.clone(),
+                })
+                .unwrap();
+            RoomBattleStatus::Prepared {
+                starter_username: String::from(source_username),
+                starter_party: dragon_names,
+                other_username: other_user.name.clone(),
+            }
+        }
         RoomBattleStatus::Prepared {
             starter_username,
             other_username,
@@ -60,7 +70,13 @@ pub async fn handle_battle_request<U, R>(
             if &source_user.name != other_username || &other_user.name != starter_username {
                 send_request_error(&source_user.tx, "another_battle_already_prepared").unwrap();
             }
+
+            // The user that started the battle invite
+            let starter_user = users.get(starter_username).unwrap();
+
+            // The party we're going to give to the starter user
             let mut starter_party = vec![];
+
             for d in starter_dragon_names.iter() {
                 starter_party.push(PartyItem::new(match create_dragon(d) {
                     Some(d) => d,
@@ -70,15 +86,16 @@ pub async fn handle_battle_request<U, R>(
                             "invalid_party_item_in_requester_party",
                         )
                         .unwrap();
-                        let other_user = users.get(starter_username).unwrap();
-                        send_request_error(&other_user.tx, "invalid_party_item").unwrap();
+                        send_request_error(&starter_user.tx, "invalid_party_item").unwrap();
                         return;
                     }
                 }));
             }
+
+            // The party we'll give to the other user
             let mut other_party = vec![];
-            for d in dragon_names {
-                other_party.push(PartyItem::new(match create_dragon(&d) {
+            for d in dragon_names.iter() {
+                other_party.push(PartyItem::new(match create_dragon(d) {
                     Some(d) => d,
                     None => {
                         send_request_error(&source_user.tx, "invalid_party_item").unwrap();
@@ -86,6 +103,19 @@ pub async fn handle_battle_request<U, R>(
                     }
                 }));
             }
+
+            starter_user
+                .send(BattleStartNotify {
+                    other_party: dragon_names,
+                })
+                .unwrap();
+
+            source_user
+                .send(BattleStartNotify {
+                    other_party: starter_dragon_names.clone(),
+                })
+                .unwrap();
+
             RoomBattleStatus::Started(Battle {
                 battlefield: Battlefield::new(
                     Party::new_from_vec(starter_party),
@@ -95,6 +125,9 @@ pub async fn handle_battle_request<U, R>(
                 usernames: (starter_username.clone(), other_username.clone()),
             })
         }
-        &RoomBattleStatus::Started(_) => return,
+        &RoomBattleStatus::Started(_) => {
+            send_request_error(&source_user.tx, "ongoing_battle").unwrap();
+            return;
+        }
     }
 }

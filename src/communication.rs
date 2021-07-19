@@ -82,9 +82,9 @@ pub async fn ws_handler(ws: WebSocket, name: String, users: Users, rooms: Rooms)
             .await
             .unwrap();
     }
-    info!("Client disconnected");
     let mut users = users.lock().await;
     let mut user = users.remove(&user.name).unwrap();
+    info!("User {} disconnected", user.name);
     exit_room(&mut rooms.lock().await, &mut user);
 }
 
@@ -185,68 +185,6 @@ async fn handle_message(
             user.current_room_id = None;
         }
         WsMessage::BattleStartRequest(req) => {
-            // if let Some(room_id) = &user.current_room_id {
-            //     let mut rooms = rooms.lock().await;
-            //     let mut room = rooms.get_mut(room_id).unwrap();
-            //     if !room.users.contains(&other_user) {
-            //         send_request_error(&user.tx, "battle_opponent_not_found").unwrap();
-            //         return Ok(());
-            //     }
-
-            //     let username = user.name.clone();
-            //     let user = users.get(&username).unwrap();
-            //     let other_user = users.get(&other_user).unwrap();
-
-            //     // let mut party_items = vec![];
-            //     // for d in dragon_names {
-            //     //     let party_item = match create_dragon(&d) {
-            //     //         Some(d) => PartyItem::new(d),
-            //     //         None => {
-            //     //             send_request_error(&user.tx, "invalid_dragon_name");
-            //     //             return Ok(());
-            //     //         }
-            //     //     };
-            //     //     party_items.push(party_item);
-            //     // }
-
-            //     if dragon_names.len() > 6 {
-            //         send_request_error(&user.tx, "too_many_party_items");
-            //         return Ok(());
-            //     }
-
-            //     room.battle = match &room.battle {
-            //         RoomBattleStatus::None => RoomBattleStatus::Prepared {
-            //             starter_username: username,
-            //             starter_party: dragon_names,
-            //             other_username: other_user.name.clone(),
-            //         },
-            //         RoomBattleStatus::Prepared {
-            //             starter_username,
-            //             other_username,
-            //             starter_party,
-            //         } => {
-            //             if &user.name != other_username || &other_user.name != starter_username {
-            //                 send_request_error(&user.tx, "another_battle_already_prepared");
-            //             }
-            //             RoomBattleStatus::None
-            //             // RoomBattleStatus::Started(Battle {
-            //             //     battlefield: Battlefield::new(
-            //             //         Party::new_from_vec(party_items),
-            //             //         NopMessenger,
-            //             //     ),
-            //             //     usernames: (starter_username.clone(), other_username.clone())
-            //             // })
-            //         }
-            //         &RoomBattleStatus::Started(_) => return Ok(()),
-            //     }
-            //     // room.battle = Some(Battle {
-            //     //     usernames: (user.name.clone(), other_user.name.clone()),
-
-            //     // })
-            // } else {
-            //     send_request_error(&user.tx, "no_battle_in_main_room").unwrap();
-            //     return Ok(());
-            // }
             handle_battle_request(req, users, rooms.lock().await, username).await;
         }
         _ => {
