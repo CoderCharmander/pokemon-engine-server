@@ -128,15 +128,11 @@ async fn handle_message(
                 // let user = users.get_mut(&user.name).unwrap();
 
                 let mut rooms = rooms.lock().await;
-                let mut room = Room {
-                    battle: RoomBattleStatus::None,
-                    users: Vec::new(),
-                };
+                let room = Room::new(user.name.clone());
                 if user.current_room_id.is_some() {
                     exit_room(&mut rooms, user);
                 }
                 user.current_room_id = Some(room_id.clone());
-                room.users.push(user.name.clone());
                 rooms.insert(room_id.clone(), room);
             }
             if let Err(e) = user.tx.send(RoomCreationReply { room_id }.into_message()) {

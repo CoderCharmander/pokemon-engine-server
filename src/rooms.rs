@@ -32,6 +32,15 @@ pub struct Room {
 
 pub type Rooms = Arc<Mutex<HashMap<String, Room>>>;
 
+impl Room {
+    pub fn new(initial_user: String) -> Self {
+        Self {
+            users: vec![initial_user],
+            battle: RoomBattleStatus::None,
+        }
+    }
+}
+
 // impl Room {
 //     pub fn new() -> Self {
 //         let (tx, rx) = mpsc::unbounded_channel();
