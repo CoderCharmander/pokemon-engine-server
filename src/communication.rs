@@ -175,8 +175,12 @@ async fn handle_message(
         }
         WsMessage::RoomExitRequest(_) => {
             let mut rooms = rooms.lock().await;
-            user.exit_room(&mut rooms);
-            user.current_room_id = None;
+            if user.current_room_id.is_some() {
+                user.exit_room(&mut rooms);
+                user.current_room_id = None;
+            } else {
+                send_request_error(&user.tx, "already_in_main_room").unwrap();
+            }
         }
         WsMessage::BattleStartRequest(req) => {
             handle_battle_request(req, users, rooms.lock().await, username).await;

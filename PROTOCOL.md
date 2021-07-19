@@ -66,6 +66,20 @@ server will then respond accordingly.
 Full message documentation
 --------------------------
 
+### Request errors
+
+Request errors are a special kind of message, since they may indicate lots of
+events. They are always sent from the server to the client making the erroneus
+request.
+
+**Data:**
+
+```json
+{
+    "reason": "<short error description>"
+}
+```
+
 ### `welcome`
 
 **Sent:** by the server, to all users in the affected room
@@ -125,3 +139,81 @@ with a `chat_notify` message.
 
 Sent after a client sends a `chat` message. Contains the `msg` attribute from
 `chat` and also the username of the sender client.
+
+### `create_room`
+
+**Sent:** by the client
+
+**Data:**
+
+```json
+{}
+```
+
+Used to create a room, which the client will automatically join. The server
+shall indicate the newly created room ID with a `room_created` message.
+
+### `room_created`
+
+**Sent:** by the server, to the client requesting room creation
+
+**Data:**
+
+```json
+{
+    "room_id": "<room id>"
+}
+```
+
+Sent after a room was created as per a `create_room` request. Contains a room
+ID that can be sent to other clients and used to join.
+
+### `join_room`
+
+**Sent:** by the client
+
+**Data:**
+
+```json
+{
+    "room_id": "<room id>"
+}
+```
+
+Requests to join a room that has the ID of `room_id`. The status will be indicated
+in a `room_join_status` message.
+
+### `room_join_status`
+
+**Sent:** by the server, to the client requesting to join a room
+
+**Data:**
+
+```json
+{
+    "room_id": "<room id>",
+    "succeeded": true
+}
+```
+
+Sent as a response to a `join_room` request. If the room with the ID exists,
+`succeeded` will be true, otherwise, it will be false. If `succeeded` is true,
+the client immediately leaves the main room and is placed into the specified
+room. If it is false, the client stays in the main room.
+
+### `leave_room`
+
+**Sent:** by the client
+
+**Data:**
+
+```json
+{}
+```
+
+Requests to exit a room and be placed back into the main room. Any battles
+the requesting client is in will be immediately terminated, and if the client
+is the last one in the room, the room will be deleted.
+
+If the client is in the main room, the `already_in_main_room` request error
+is received.
