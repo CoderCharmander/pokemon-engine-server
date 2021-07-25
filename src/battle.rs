@@ -12,9 +12,24 @@ use crate::{
     communication::send_request_error,
     data::create_dragon,
     messages::*,
-    room::{Battle, Room, RoomBattleStatus},
+    room::Room,
     user::User,
 };
+
+pub struct Battle {
+    pub usernames: (String, String),
+    pub battlefield: Battlefield<NopMessenger>,
+}
+
+pub enum RoomBattleStatus {
+    None,
+    Prepared {
+        starter_username: String,
+        starter_party: Vec<String>,
+        other_username: String,
+    },
+    Started(Battle),
+}
 
 pub async fn handle_battle_request<U, R>(
     BattleStartRequest {

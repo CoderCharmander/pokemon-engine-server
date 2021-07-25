@@ -7,20 +7,9 @@ use pokemon_engine::battle::{Battlefield, NopMessenger};
 
 use tokio::sync::Mutex;
 
-pub struct Battle {
-    pub usernames: (String, String),
-    pub battlefield: Battlefield<NopMessenger>,
-}
+use crate::battle::RoomBattleStatus;
 
-pub enum RoomBattleStatus {
-    None,
-    Prepared {
-        starter_username: String,
-        starter_party: Vec<String>,
-        other_username: String,
-    },
-    Started(Battle),
-}
+
 
 pub struct Room {
     pub users: Vec<String>,
