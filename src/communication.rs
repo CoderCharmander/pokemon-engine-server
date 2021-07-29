@@ -62,9 +62,8 @@ pub async fn ws_handler(ws: WebSocket, name: String, users: Users, rooms: Rooms)
             Ok(msg) => {
                 if !msg.is_text() {
                     continue;
-                } else {
-                    msg
                 }
+                msg
             }
             Err(e) => {
                 error!("While receiving from {}: {}", user.name, e);

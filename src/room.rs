@@ -1,15 +1,10 @@
-use std::{
-    collections::HashMap,
-    sync::Arc,
-};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use pokemon_engine::battle::{Battlefield, NopMessenger};
 
 use tokio::sync::Mutex;
 
-use crate::battle::RoomBattleStatus;
-
-
+use crate::{battle::RoomBattleStatus, messages::WsSentMessage, user::User};
 
 pub struct Room {
     pub users: Vec<String>,
@@ -23,6 +18,16 @@ impl Room {
         Self {
             users: vec![initial_user],
             battle: RoomBattleStatus::None,
+        }
+    }
+
+    pub fn broadcast<U, M: WsSentMessage>(&self, users: U, message: M)
+    where
+        U: Deref<Target = HashMap<String, User>>,
+    {
+        for user in self.users.iter() {
+            let user = &users[user];
+            user.send_raw(message.into_message()).unwrap();
         }
     }
 }

@@ -7,6 +7,7 @@ use warp::{ws::Ws, Filter};
 
 use crate::user::Users;
 
+mod battle;
 mod communication;
 mod data;
 mod error;
@@ -14,7 +15,6 @@ mod handlers;
 mod messages;
 mod room;
 mod user;
-mod battle;
 
 pub struct UppercaseAlphanumericDistribution(Uniform<usize>);
 impl UppercaseAlphanumericDistribution {

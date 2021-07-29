@@ -1,0 +1,95 @@
+tripla_farok_csapas:
+  base_power: 60
+
+mereg: >
+  poison, minden kor 14%
+
+tuzcsova:
+  base_power: 80
+
+harapas:
+  base_power: 40
+
+buzogany:
+  base_power: 70
+  # plusz 20% eséllyel nincs támadás a kövi körben (ellenfelnek)
+
+tombolas:
+  base_power: 90
+  # nincs tamadas (ellenfelnek)
+
+csit_csat:
+  # plusz 1 attack plusz 1 speed
+
+meregfullank:
+  base_power: 35
+  # 30% poison
+
+special_z_mega_whatever:
+  szorito_hurok:
+    base_power: 95
+    # 100% poison
+
+villamcsapas:
+  base_power: 85
+
+gombvillam:
+  base_power: 110
+  # user.attack -= 2
+
+marcangolas:
+  base_power: 85
+  # user.attack -= 1
+
+bomboles:
+  # user.attack += 1
+
+elektromos_vihar:
+  # elektromos vihart rak fel
+
+szelloket:
+  # eltunteti a perzselo koveket. MIERT? MIT TETTEM? MIEEEEEEEE
+
+vihar_ereje:
+  # kulonleges
+  base_power: 130
+
+plazmabomba:
+  base_power: 80
+
+fantom:
+  base_power: 85
+  # es elso korben eltunik. majd megoldom
+
+fejeles:
+  base_power: 40
+
+sortuz:
+  base_power: 90
+
+lidercnyomas:
+  # special
+  base_power: 95
+  # enemy.{speed, def} -= 1
+
+lava_nyam: #???
+  # user.hp += user.max_hp * .35
+
+perzselo_kovek:
+  # ha az ellenfel cserel, akkor megperzselodik
+
+lava_bomba:
+  base_power: 35
+  # 30% burn -> enemy
+
+foldrenges: 90
+vulkankitores: 110 # user.attack -= 2
+
+perzseles:
+  # burn, ellenfel max hp -16%
+
+sose_hibazik: 110 # -2 speed ellenfelnek?
+ejfuria_tanc: # +1 attack +1 speed +1 evasion
+szuper_szonika: # nincs hibazas innentol kezdve
+manover: 50 # +4 speed
+farokcsapas: 40

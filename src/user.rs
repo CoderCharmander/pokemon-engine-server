@@ -10,10 +10,7 @@ use tokio::sync::{
 };
 use warp::ws::Message;
 
-use crate::{
-    messages::WsSentMessage,
-    room::Room,
-};
+use crate::{messages::*, room::Room};
 
 #[derive(Clone)]
 pub struct User {
@@ -27,14 +24,22 @@ impl User {
         self.tx.send(msg.into_message())
     }
 
+    pub fn send_raw(&self, message: Message) -> Result<(), SendError<Message>> {
+        self.tx.send(message)
+    }
+
+    pub fn send_request_error(&self, reason: &str) -> Result<(), SendError<Message>> {
+        self.send(RequestErrorMessage {
+            reason: reason.into(),
+        })
+    }
+
     pub fn exit_room<T>(&mut self, rooms: &mut T) -> Option<()>
     where
         T: DerefMut + Deref<Target = HashMap<String, Room>>,
     {
         let current_room_id = self.current_room_id.as_ref()?;
-        let room = rooms
-            .get_mut(current_room_id)
-            .unwrap();
+        let room = rooms.get_mut(current_room_id).unwrap();
         if room.users.len() == 1 {
             rooms.remove(current_room_id);
             return Some(());

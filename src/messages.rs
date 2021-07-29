@@ -113,6 +113,26 @@ json_structs! {
     reply BattleStartNotify BattleStartNotify "battle_start" => {
         other_party: Vec<String>,
     }
+
+    message UseMoveRequest UseMoveRequest "battle_use_move" => {
+        move_name: String,
+    }
+
+    message SwitchRequest SwitchRequest "battle_switch" => {
+        next_dragon: u8,
+    }
+
+    reply DamageNotify DamageNotify "battle_damage_notify" => {
+        party: u8,
+        amount: u32,
+        fainted: bool,
+    }
+
+    reply SwitchNotify SwitchNotify "battle_switch_notify" => {
+        party: u8,
+        next_idx: u8,
+        switch_allowed: bool
+    }
 }
 
 #[derive(Serialize)]
