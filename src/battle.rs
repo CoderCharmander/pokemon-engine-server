@@ -16,6 +16,8 @@ use crate::{
     user::User,
 };
 
+pub mod messenger;
+
 pub type ServerMessenger = NopMessenger;
 
 pub struct Battle {
@@ -51,6 +53,29 @@ pub enum RoomBattleStatus {
         other_username: String,
     },
     Started(Battle),
+}
+
+impl RoomBattleStatus {
+    pub fn unwrap(self) -> Battle {
+        match self {
+            Self::None | Self::Prepared { .. } => panic!("Unwrapping uninitialized battle"),
+            Self::Started(battle) => battle,
+        }
+    }
+
+    pub fn unwrap_ref(&self) -> &Battle {
+        match self {
+            Self::None | Self::Prepared { .. } => panic!("Unwrapping uninitialized battle"),
+            Self::Started(battle) => battle,
+        }
+    }
+
+    pub fn unwrap_ref_mut(&mut self) -> &mut Battle {
+        match self {
+            Self::None | Self::Prepared { .. } => panic!("Unwrapping uninitialized battle"),
+            Self::Started(battle) => battle,
+        }
+    }
 }
 
 pub enum BattleAction {
@@ -179,12 +204,12 @@ pub async fn handle_in_battle_request<U, R>(
     req: WsMessage,
     users: U,
     mut rooms: R,
-    source_username: String,
+    source_username: &str,
 ) where
     U: DerefMut + Deref<Target = HashMap<String, User>>,
     R: DerefMut + Deref<Target = HashMap<String, Room>>,
 {
-    let source_user = &users[&source_username];
+    let source_user = &users[source_username];
     let room_id = match &source_user.current_room_id {
         Some(id) => id,
         None => {
@@ -210,7 +235,7 @@ pub async fn handle_in_battle_request<U, R>(
         source_user.send_request_error("not_in_battle").unwrap();
         return;
     };
-    let source_party = battle.battlefield.party_mut(source_party_id);
+    // let source_party = battle.battlefield.party_mut(source_party_id);
 
     let battle_action = match req {
         WsMessage::UseMoveRequest(req) => BattleAction::UseMove(req.move_name),
@@ -219,37 +244,38 @@ pub async fn handle_in_battle_request<U, R>(
     };
 
     if let Some((party_id, action)) = &battle.prepared_action {
-      //  execute_battle_action(action, *party_id, &mut battle.battlefield, room, users);
+        if execute_battle_action(*party_id, action, &mut battle.battlefield).is_none() {
+            source_user.send_request_error("invalid_move_name").unwrap();
+        }
+        execute_battle_action(party_id.opposing(), &battle_action, &mut battle.battlefield);
+        battle.battlefield.turn();
+    } else {
+        battle.prepared_action = Some((source_party_id, battle_action));
     }
 }
 
-fn execute_battle_action<U>(
-    action: &BattleAction,
+fn execute_battle_action(
     party_id: PartyId,
+    action: &BattleAction,
     battlefield: &mut Battlefield<ServerMessenger>,
-    room: &Room,
-    users: U,
-) -> Option<()>
-where
-    U: Deref<Target = HashMap<String, User>>,
-{
+) -> Option<WsMessage> {
     match action {
         BattleAction::UseMove(move_name) => {
             let attack = create_move(&move_name)?;
             battlefield.attack(party_id, attack.as_ref());
+            Some(WsMessage::UseMoveNotify(UseMoveNotify {
+                move_name: move_name.clone(),
+                party: party_id.into(),
+            }))
         }
         BattleAction::Switch(new_dragon) => {
-            if !battlefield.party_mut(party_id).switch(*new_dragon as usize) {
-                room.broadcast(
-                    users,
-                    SwitchNotify {
-                        party: party_id.into(),
-                        next_idx: *new_dragon,
-                        switch_allowed: false,
-                    },
-                );
-            }
+            let next_idx = *new_dragon;
+            let switch_allowed = battlefield.party_mut(party_id).switch(*new_dragon as usize);
+            Some(WsMessage::SwitchNotify(SwitchNotify {
+                party: party_id.into(),
+                next_idx,
+                switch_allowed,
+            }))
         }
     }
-    Some(())
 }

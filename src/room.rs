@@ -2,22 +2,25 @@ use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use pokemon_engine::battle::{Battlefield, NopMessenger};
 
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, mpsc::UnboundedSender};
+use warp::ws::Message;
 
 use crate::{battle::RoomBattleStatus, messages::WsSentMessage, user::User};
 
 pub struct Room {
     pub users: Vec<String>,
     pub battle: RoomBattleStatus,
+    pub tx: UnboundedSender<Message>,
 }
 
 pub type Rooms = Arc<Mutex<HashMap<String, Room>>>;
 
 impl Room {
-    pub fn new(initial_user: String) -> Self {
+    pub fn new(initial_user: String, tx: UnboundedSender<Message>) -> Self {
         Self {
             users: vec![initial_user],
             battle: RoomBattleStatus::None,
+            tx,
         }
     }
 
@@ -25,9 +28,15 @@ impl Room {
     where
         U: Deref<Target = HashMap<String, User>>,
     {
+        self.broadcast_raw(users, message.into_message());
+    }
+
+    pub fn broadcast_raw<U>(&self, users: U, message: Message)
+    where U: Deref<Target = HashMap<String, User>>,
+    {
         for user in self.users.iter() {
             let user = &users[user];
-            user.send_raw(message.into_message()).unwrap();
+            user.send_raw(message.clone()).unwrap();
         }
     }
 }

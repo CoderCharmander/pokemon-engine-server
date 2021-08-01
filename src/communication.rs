@@ -5,7 +5,7 @@ use tokio::sync::mpsc::{self, error::SendError, UnboundedSender};
 use warp::ws::{Message, WebSocket};
 
 use crate::{
-    battle::handle_battle_request,
+    battle::{handle_battle_request, handle_in_battle_request},
     messages::*,
     room::{Room, Rooms},
     user::{SingleUser, User, Users},
@@ -93,6 +93,7 @@ async fn handle_message(
     rooms: Rooms,
     username: &str,
 ) -> Result<(), ()> {
+    let users_mutex = users.clone();
     let mut users = users.lock().await;
     let mut user = users.get_mut(username).unwrap();
     match msg {
@@ -122,17 +123,31 @@ async fn handle_message(
                 .sample_iter(crate::UppercaseAlphanumericDistribution::new())
                 .take(5)
                 .collect();
-            {
-                // let mut users = users.lock().await;
-                // let user = users.get_mut(&user.name).unwrap();
+            // let mut users = users.lock().await;
+            // let user = users.get_mut(&user.name).unwrap();
 
-                let mut rooms = rooms.lock().await;
-                let room = Room::new(user.name.clone());
-                user.exit_room(&mut rooms);
-                user.current_room_id = Some(room_id.clone());
-                rooms.insert(room_id.clone(), room);
-            }
-            if let Err(e) = user.tx.send(RoomCreationReply { room_id }.into_message()) {
+            let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
+            let mut rooms_lock = rooms.lock().await;
+            let room = Room::new(user.name.clone(), tx);
+            user.exit_room(&mut rooms_lock);
+            user.current_room_id = Some(room_id.clone());
+            rooms_lock.insert(room_id.clone(), room);
+            
+            let room_thread_id = room_id.clone();
+            let rooms_mutex = rooms.clone();
+            tokio::spawn(async move {
+                while let Some(msg) = rx.recv().await {
+                    let rooms = rooms_mutex.lock().await;
+                    let users = users_mutex.lock().await;
+                    let room = match rooms.get(&room_thread_id) {
+                        Some(room) => room,
+                        None => break,
+                    };
+
+                    room.broadcast_raw(users, msg);
+                }
+            });
+            if let Err(e) = user.tx.send(RoomCreationReply { room_id: room_id.clone() }.into_message()) {
                 error!(
                     "While sending a room creation reply to {}: {}",
                     user.name, e
@@ -183,6 +198,9 @@ async fn handle_message(
         }
         WsMessage::BattleStartRequest(req) => {
             handle_battle_request(req, users, rooms.lock().await, username).await;
+        }
+        msg @ WsMessage::UseMoveRequest(_) | msg @ WsMessage::SwitchRequest(_) => {
+            handle_in_battle_request(msg, users, rooms.lock().await, username).await;
         }
         _ => {
             user.tx

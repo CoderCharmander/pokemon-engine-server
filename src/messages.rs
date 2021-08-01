@@ -122,6 +122,11 @@ json_structs! {
         next_dragon: u8,
     }
 
+    reply UseMoveNotify UseMoveNotify "use_move_notify" => {
+        party: u8,
+        move_name: String,
+    }
+
     reply DamageNotify DamageNotify "battle_damage_notify" => {
         party: u8,
         amount: u32,
@@ -140,7 +145,7 @@ pub struct HealthReply {
     pub code: u16,
 }
 
-pub trait WsSentMessage: Serialize {
+pub trait WsSentMessage: Serialize + Sized {
     fn get_type() -> &'static str;
     fn into_message(&self) -> Message {
         Message::text(json!({"action": Self::get_type(), "data": self}).to_string())
